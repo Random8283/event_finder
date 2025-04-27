@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
-from .models import Event, Category, Registration
+from .models import Event, Registration
 from .forms import EventForm, RegistrationForm, UserSignupForm
 
 # Create your views here.

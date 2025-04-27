@@ -1,10 +1,6 @@
 from django.contrib import admin
-from .models import Event, Category, Registration
+from .models import Event, Registration
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name',)
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
