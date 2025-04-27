@@ -1,0 +1,107 @@
+{% extends 'events/base_event.html' %}
+{% load event_filters %}
+
+{% block event_content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>{{ event.title }}</h2>
+            <div>
+                <a href="{% url 'events:event_update' pk=event.pk %}" class="btn btn-warning">Edit Event</a>
+                <a href="{% url 'events:event_delete' pk=event.pk %}" class="btn btn-danger">Delete Event</a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if event.image %}
+            <div class="text-center mb-4">
+                <img src="{{ event.image.url }}" class="img-fluid rounded" style="max-height: 400px; width: auto;" alt="{{ event.title }}">
+            </div>
+        {% endif %}
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Event Details</h5>
+                <p><strong>Date:</strong> {{ event.date|date:"F j, Y" }}</p>
+                <p><strong>Time:</strong> {{ event.time|time:"g:i A" }}</p>
+                <p><strong>Location:</strong> {{ event.location }}</p>
+                <p><strong>Campus:</strong> {{ event.get_campus_display }}</p>
+                <p><strong>Category:</strong> {{ event.category.name|default:"No category" }}</p>
+                <p><strong>Organizer:</strong> {{ event.organizer.username }}</p>
+                <p><strong>Registrations:</strong> {{ event.registrations.count }}</p>
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar bg-primary" 
+                         role="progressbar" 
+                         data-width="100"
+                         aria-valuenow="{{ event.registrations.count }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        <span class="text-white">{{ event.registrations.count }} registrations</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Description</h5>
+                <p>{{ event.description }}</p>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h5>Registrations</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">User</th>
+                            <th class="text-center">Registration Date</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registration in event.registrations.all %}
+                            <tr>
+                                <td class="text-center align-middle">{{ registration.user.username }}</td>
+                                <td class="text-center align-middle">{{ registration.registration_date|date:"F j, Y" }}</td>
+                                <td class="text-center align-middle">
+                                    <span class="badge {% if registration.status == 'confirmed' %}bg-success{% elif registration.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ registration.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-bs-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'events:registration_update' pk=registration.pk %}">Update Status</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'events:registration_delete' pk=registration.pk %}">Remove Registration</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No registrations yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+        bar.style.minWidth = '2em';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

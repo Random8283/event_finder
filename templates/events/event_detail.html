@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} - Event Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            {% if event.image %}
+                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h1 class="card-title">{{ event.title }}</h1>
+                <p class="card-text">{{ event.description }}</p>
+                <ul class="list-unstyled">
+                    <li><strong>Date:</strong> {{ event.date|date:"F j, Y" }} at {{ event.time|time:"g:i A" }}</li>
+                    <li><strong>Location:</strong> {{ event.location }}</li>
+                    {% if event.category %}
+                        <li><strong>Category:</strong> {{ event.category.name }}</li>
+                    {% endif %}
+                    <li><strong>Organizer:</strong> {{ event.organizer.username }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Event Actions</h5>
+                {% if user.is_authenticated %}
+                    {% if user.is_admin and user == event.organizer %}
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'events:event_update' event.pk %}" class="btn btn-primary">Edit Event</a>
+                            <a href="{% url 'events:event_delete' event.pk %}" class="btn btn-danger">Delete Event</a>
+                        </div>
+                    {% elif not user.is_admin %}
+                        {% if not is_registered and not event.is_past_event %}
+                            <a href="{% url 'events:event_register' event.pk %}" class="btn btn-success">Register for Event</a>
+                        {% elif is_registered %}
+                            <div class="alert alert-success">
+                                You are registered for this event!
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                This event has already passed.
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info">
+                        Please <a href="{% url 'login' %}">login</a> to register for this event.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

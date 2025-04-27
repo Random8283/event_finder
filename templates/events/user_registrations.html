@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}My Registrations - Event Management System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">My Event Registrations</h1>
+
+<div class="row">
+    {% for registration in registrations %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                {% if registration.event.image %}
+                    <img src="{{ registration.event.image.url }}" class="card-img-top" alt="{{ registration.event.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ registration.event.title }}</h5>
+                    <p class="card-text">{{ registration.event.description|truncatewords:20 }}</p>
+                    <ul class="list-unstyled">
+                        <li><strong>Date:</strong> {{ registration.event.date|date:"F j, Y" }} at {{ registration.event.time|time:"g:i A" }}</li>
+                        <li><strong>Location:</strong> {{ registration.event.location }}</li>
+                        <li><strong>Status:</strong> 
+                            <span class="badge {% if registration.status == 'confirmed' %}bg-success{% elif registration.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ registration.status|title }}
+                            </span>
+                        </li>
+                        <li><strong>Registration Date:</strong> {{ registration.registration_date|date:"F j, Y" }}</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'events:event_detail' registration.event.pk %}" class="btn btn-primary">View Event Details</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                You haven't registered for any events yet.
+                <a href="{% url 'events:event_list' %}" class="alert-link">Browse available events</a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %} 
