@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
+from django.db.models import Q
 from .models import Event, Registration
 from .forms import EventForm, RegistrationForm, UserSignupForm
 
@@ -178,3 +179,22 @@ class EventDeregisterView(LoginRequiredMixin, View):
             messages.error(request, 'You are not registered for this event.')
         
         return redirect('events:event_detail', pk=pk)
+
+def event_list(request):
+    events = Event.objects.all()
+
+    # Get the search query
+    search_query = request.GET.get('search')
+    print(f"Search Query: {search_query}")  # Debugging output
+
+    if search_query:
+        events = events.filter(
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
+        )
+        print(f"Filtered Events: {events}")  # Debugging output
+
+    return render(request, 'events/event_list.html', {
+        'events': events,
+        'campus_choices': Event.CAMPUS_CHOICES,
+        'category_choices': Event.EVENT_TYPES,
+    })
