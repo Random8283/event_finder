@@ -10,7 +10,9 @@
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 {% if registration.event.image %}
-                    <img src="{{ registration.event.image.url }}" class="card-img-top" alt="{{ registration.event.title }}">
+                    <div class="card-img-container" style="height: 200px; overflow: hidden;">
+                        <img src="{{ registration.event.image.url }}" class="card-img-top h-100 w-100 object-fit-cover" alt="{{ registration.event.title }}">
+                    </div>
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ registration.event.title }}</h5>
