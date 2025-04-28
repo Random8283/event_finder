@@ -7,12 +7,13 @@ from PIL import Image
 
 class Event(models.Model):
     CAMPUS_CHOICES = [
-        ('main', 'Main Campus'),
-        ('north', 'North Campus'),
-        ('south', 'South Campus'),
-        ('east', 'East Campus'),
-        ('west', 'West Campus'),
+        ('cochran', 'Cochran Campus'),
+        ('dublin', 'Dublin Campus'),
+        ('eastman', 'Eastman Campus'),
+        ('macon', 'Macon Campus'),
+        ('warner robins', 'Warner Robins Campus'),
         ('online', 'Online'),
+        ('other', 'Other'),
     ]
     EVENT_TYPES = [
         ('club', 'Club'),
@@ -27,7 +28,7 @@ class Event(models.Model):
     date = models.DateField()
     time = models.TimeField(default=time(12, 0))  # Default to noon
     location = models.CharField(max_length=200)
-    campus = models.CharField(max_length=10, choices=CAMPUS_CHOICES, default='main')
+    campus = models.CharField(max_length=30, choices=CAMPUS_CHOICES, default='macon')
     category = models.CharField(max_length=10, choices=EVENT_TYPES, default='main')
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
     image = models.ImageField(upload_to='event_images/', blank=True, null=True)
