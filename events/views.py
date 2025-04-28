@@ -7,6 +7,8 @@ from django.http import HttpResponseRedirect
 from django.db.models import Q
 from .models import Event, Registration
 from .forms import EventForm, RegistrationForm, UserSignupForm
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.utils import timezone
 
 # Create your views here.
 
@@ -23,14 +25,68 @@ class EventListView(ListView):
     def get_template_names(self):
         if self.request.user.is_staff:
             return ['events/admin/event_list.html']
-        return ['events/user/event_list.html']
+        return ['events/event_list.html']
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Get filter parameters
+        search_query = self.request.GET.get('search')
+        campus = self.request.GET.get('campus')
         category = self.request.GET.get('category')
+        date_range = self.request.GET.get('date_range')
+
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
+        # Apply campus filter
+        if campus:
+            queryset = queryset.filter(campus=campus)
+
+        # Apply category filter
         if category:
-            queryset = queryset.filter(category__name=category)
+            queryset = queryset.filter(category=category)
+
+        # Apply date range filter
+        today = timezone.now().date()
+        if date_range:
+            if date_range == 'today':
+                queryset = queryset.filter(date=today)
+            elif date_range == 'week':
+                start_of_week = today - timezone.timedelta(days=today.weekday())
+                end_of_week = start_of_week + timezone.timedelta(days=6)
+                queryset = queryset.filter(date__range=[start_of_week, end_of_week])
+            elif date_range == 'month':
+                start_of_month = today.replace(day=1)
+                if today.month == 12:
+                    end_of_month = today.replace(year=today.year + 1, month=1, day=1) - timezone.timedelta(days=1)
+                else:
+                    end_of_month = today.replace(month=today.month + 1, day=1) - timezone.timedelta(days=1)
+                queryset = queryset.filter(date__range=[start_of_month, end_of_month])
+            elif date_range == 'upcoming':
+                queryset = queryset.filter(date__gte=today)
+            elif date_range == 'past':
+                queryset = queryset.filter(date__lt=today)
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['campus_choices'] = Event.CAMPUS_CHOICES
+        context['category_choices'] = Event.EVENT_TYPES
+        
+        # Get current filter parameters
+        context['filter_params'] = {
+            'search': self.request.GET.get('search', ''),
+            'campus': self.request.GET.get('campus', ''),
+            'category': self.request.GET.get('category', ''),
+            'date_range': self.request.GET.get('date_range', '')
+        }
+        
+        return context
 
 class EventDetailView(DetailView):
     model = Event
@@ -183,18 +239,56 @@ class EventDeregisterView(LoginRequiredMixin, View):
 def event_list(request):
     events = Event.objects.all()
 
-    # Get the search query
+    # Get the search query and filters
     search_query = request.GET.get('search')
-    print(f"Search Query: {search_query}")  # Debugging output
+    campus = request.GET.get('campus')
+    category = request.GET.get('category')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
+    # Apply search filter
     if search_query:
         events = events.filter(
             Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
-        print(f"Filtered Events: {events}")  # Debugging output
+
+    # Apply campus filter
+    if campus:
+        events = events.filter(campus=campus)
+
+    # Apply category filter
+    if category:
+        events = events.filter(category=category)
+
+    # Apply date range filter
+    if start_date:
+        events = events.filter(date__gte=start_date)
+    if end_date:
+        events = events.filter(date__lte=end_date)
+
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(events, 10)  # Show 10 events per page
+    try:
+        events = paginator.page(page)
+    except PageNotAnInteger:
+        events = paginator.page(1)
+    except EmptyPage:
+        events = paginator.page(paginator.num_pages)
+
+    # Get filter parameters for pagination
+    filter_params = {
+        'search': search_query,
+        'campus': campus,
+        'category': category,
+        'start_date': start_date,
+        'end_date': end_date
+    }
 
     return render(request, 'events/event_list.html', {
         'events': events,
         'campus_choices': Event.CAMPUS_CHOICES,
         'category_choices': Event.EVENT_TYPES,
+        'filter_params': filter_params,
+        'is_paginated': paginator.num_pages > 1,
     })

@@ -12,15 +12,15 @@
     <form method="get" class="mb-4">
         <div class="row">
             <div class="col-md-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" id="date" name="date" class="form-control" value="{{ request.GET.date }}">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" id="search" name="search" class="form-control" placeholder="Search events..." value="{{ filter_params.search }}">
             </div>
             <div class="col-md-3">
                 <label for="campus" class="form-label">Campus</label>
                 <select id="campus" name="campus" class="form-select">
                     <option value="">All Campuses</option>
                     {% for value, label in campus_choices %}
-                        <option value="{{ value }}" {% if request.GET.campus == value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if filter_params.campus == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -29,18 +29,26 @@
                 <select id="category" name="category" class="form-select">
                     <option value="">All Categories</option>
                     {% for value, label in category_choices %}
-                        <option value="{{ value }}" {% if request.GET.category == value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if filter_params.category == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" id="search" name="search" class="form-control" placeholder="Search events..." value="{{ request.GET.search }}">
+                <label for="date_range" class="form-label">Date Range</label>
+                <select id="date_range" name="date_range" class="form-select">
+                    <option value="">All Dates</option>
+                    <option value="today" {% if filter_params.date_range == 'today' %}selected{% endif %}>Today</option>
+                    <option value="week" {% if filter_params.date_range == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if filter_params.date_range == 'month' %}selected{% endif %}>This Month</option>
+                    <option value="upcoming" {% if filter_params.date_range == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="past" {% if filter_params.date_range == 'past' %}selected{% endif %}>Past Events</option>
+                </select>
             </div>
         </div>
         <div class="row mt-3">
-            <div class="col-md-12 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Filter</button>
+            <div class="col-md-12 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{% url 'events:event_list' %}" class="btn btn-secondary">Clear Filters</a>
             </div>
         </div>
     </form>
@@ -58,7 +66,10 @@
                         <p class="card-text">
                             <small class="text-muted">
                                 Date: {{ event.date|date:"F j, Y" }}<br>
-                                Location: {{ event.location }}
+                                Time: {{ event.time|time:"h:i A" }}<br>
+                                Location: {{ event.location }}<br>
+                                Campus: {{ event.get_campus_display }}<br>
+                                Category: {{ event.get_category_display }}
                             </small>
                         </p>
                         <a href="{% url 'events:event_detail' pk=event.pk %}" class="btn btn-primary">View Details</a>
@@ -77,10 +88,10 @@
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filter_params.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
                     </li>
                 {% endif %}
-
+                
                 {% for num in page_obj.paginator.page_range %}
                     {% if page_obj.number == num %}
                         <li class="page-item active">
@@ -88,14 +99,14 @@
                         </li>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            <a class="page-link" href="?page={{ num }}{% for key, value in filter_params.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filter_params.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
                     </li>
                 {% endif %}
             </ul>

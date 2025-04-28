@@ -55,14 +55,6 @@
         </div>
     </nav>
 
-    <!-- Filter Form -->
-    <div class="container mt-4">
-        <form method="get" action="{% url 'events:event_list' %}" class="d-flex align-items-center mb-4">
-            <input type="text" id="search" name="search" class="form-control me-2" placeholder="Search events..." value="{{ request.GET.search }}">
-            <button type="submit" class="btn btn-primary ms-2">Search</button>
-        </form>
-    </div>
-
     <div class="container mt-4">
         {% if messages %}
             {% for message in messages %}
